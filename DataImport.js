@@ -19,7 +19,7 @@ ImportData.post(
 ImportData.post(
   "/products",
   asyncHandler(async (req, res) => {
-    await Product.remove({});
+    await Product.deleteMany({});
     const importProducts = await Product.insertMany(products);
     res.send({ importProducts });
   })

@@ -35,10 +35,7 @@ app.use("/api/orders", orderRouter);
 //   res.send(process.env.PAYPAL_CLIENT_ID);
 // });
 app.get("/api/config/paypal", (req, res) => {
-  res.send(
-    // process.env.PAYPAL_CLIENT_ID
-    AdSM_bqsj7vJ7B47DxZ5L03RKFwvHjx5NoB97C9lK7LM9FVKDJJKHdN8KZCFM2T_kbDFKzfS8AOq3ILR
-  );
+  res.send(process.env.PAYPAL_CLIENT_ID);
 });
 
 // ERROR HANDLER
