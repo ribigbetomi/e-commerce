@@ -1,7 +1,8 @@
 import express from "express";
 import asyncHandler from "express-async-handler";
-import protect from "../Middleware/AuthMiddleware.js";
+import { admin, protect } from "../Middleware/AuthMiddleware.js";
 import Order from "../Models/OrderModel.js";
+import axios from "axios";
 
 const orderRouter = express.Router();
 
@@ -52,6 +53,19 @@ orderRouter.get(
   })
 );
 
+// ADMIN GET ALL ORDERS
+orderRouter.get(
+  "/all",
+  protect,
+  admin,
+  asyncHandler(async (req, res) => {
+    const orders = await Order.find({})
+      .sort({ _id: -1 })
+      .populate("user", "id name email");
+    res.json(orders);
+  })
+);
+
 // GET ORDER BY ID
 orderRouter.get(
   "/:id",
@@ -93,6 +107,58 @@ orderRouter.put(
     } else {
       res.status(404);
       throw new Error("Order Not Found");
+    }
+  })
+);
+
+// PAYSTACK ORDER IS PAID
+orderRouter.put(
+  "/:id/:ref/paystack",
+  protect,
+  asyncHandler(async (req, res) => {
+    let secret = process.env.PAYSTACK_SECRET;
+    let orderId = req.params.id;
+    // console.log(orderId);
+    let ref = req.params.ref;
+    // console.log(ref);
+    // console.log(secret, "secret");
+    let output;
+    const order = await Order.findById(orderId);
+    console.log(order, "route");
+    try {
+      await axios
+        .get(`https://api.paystack.co/transaction/verify/${ref}`, {
+          headers: {
+            authorization: `Bearer ${secret}`,
+            "content-type": "application/json",
+            "cache-control": "no-cache",
+          },
+        })
+        .then((response) => {
+          output = response;
+        })
+        .catch((error) => {
+          output = error;
+        });
+      console.log(output, "output");
+
+      if (output.data.message === "Verification successful") {
+        if (order) {
+          order.isPaid = true;
+          order.paidAt = Date.now();
+
+          const updatedOrder = await order.save();
+          console.log(updatedOrder, "update");
+          res.json(updatedOrder);
+        } else {
+          res.status(404);
+          throw new Error("Order Not Found");
+        }
+      } else {
+        console.log("Payment Failed");
+      }
+    } catch (error) {
+      console.log(error);
     }
   })
 );
