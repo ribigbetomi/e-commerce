@@ -124,7 +124,7 @@ orderRouter.put(
     // console.log(secret, "secret");
     let output;
     const order = await Order.findById(orderId);
-    console.log(order, "route");
+    // console.log(order, "route");
     try {
       await axios
         .get(`https://api.paystack.co/transaction/verify/${ref}`, {
@@ -140,7 +140,7 @@ orderRouter.put(
         .catch((error) => {
           output = error;
         });
-      console.log(output, "output");
+      // console.log(output, "output");
 
       if (output.data.message === "Verification successful") {
         if (order) {
@@ -148,17 +148,17 @@ orderRouter.put(
           order.paidAt = Date.now();
 
           const updatedOrder = await order.save();
-          console.log(updatedOrder, "update");
+          // console.log(updatedOrder, "update");
           res.json(updatedOrder);
         } else {
           res.status(404);
           throw new Error("Order Not Found");
         }
       } else {
-        console.log("Payment Failed");
+        // console.log("Payment Failed");
       }
     } catch (error) {
-      console.log(error);
+      // console.log(error);
     }
   })
 );
