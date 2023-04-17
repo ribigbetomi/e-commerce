@@ -3,8 +3,10 @@ import asyncHandler from "express-async-handler";
 import { admin, protect } from "../Middleware/AuthMiddleware.js";
 import Order from "../Models/OrderModel.js";
 import axios from "axios";
-
+// import dotenv from "dotenv";
+import stripe from "stripe";
 const orderRouter = express.Router();
+// dotenv.config();
 
 // CREATE ORDER
 orderRouter.post(
@@ -159,6 +161,57 @@ orderRouter.put(
       }
     } catch (error) {
       // console.log(error);
+    }
+  })
+);
+
+// STRIPE ORDER IS PAID
+orderRouter.put(
+  "/stripe/:id",
+  protect,
+  asyncHandler(async (req, res) => {
+    let orderId = req.params.id;
+    console.log(orderId, "orderId");
+
+    const order = await Order.findById(orderId);
+    console.log(order, "order");
+    try {
+      if (order) {
+        order.isPaid = true;
+        order.paidAt = Date.now();
+
+        const updatedOrder = await order.save();
+        // console.log(updatedOrder, "update");
+        res.json(updatedOrder);
+      } else {
+        res.status(404);
+        throw new Error("Order Not Found");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  })
+);
+
+orderRouter.post(
+  "/intent/stripe",
+  protect,
+  asyncHandler(async (req, res) => {
+    try {
+      const Stripe = stripe(process.env.STRIPE_SECRET_KEY);
+      // console.log(process.env.STRIPE_SECRET_KEY, "stripeSecretKey");
+      const paymentIntent = await Stripe.paymentIntents.create({
+        amount: req.body.amount,
+        currency: "usd",
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+      res.json({ paymentIntent: paymentIntent.client_secret });
+    } catch (e) {
+      res.status(400).json({
+        error: e.message,
+      });
     }
   })
 );
