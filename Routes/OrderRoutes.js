@@ -198,7 +198,7 @@ orderRouter.post(
   protect,
   asyncHandler(async (req, res) => {
     try {
-      const Stripe = stripe(process.env.STRIPE_SECRET_KEY);
+      const Stripe = stripe(`${process.env.STRIPE_SECRET_KEY}`);
       // console.log(process.env.STRIPE_SECRET_KEY, "stripeSecretKey");
       const paymentIntent = await Stripe.paymentIntents.create({
         amount: req.body.amount,
